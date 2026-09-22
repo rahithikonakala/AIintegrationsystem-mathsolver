@@ -6,12 +6,6 @@ import math
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-
-
-# ============================================================
-# MEDIAPIPE SETUP
-# ============================================================
-
 BaseOptions = python.BaseOptions
 HandLandmarker = vision.HandLandmarker
 HandLandmarkerOptions = vision.HandLandmarkerOptions
@@ -29,10 +23,6 @@ options = HandLandmarkerOptions(
 )
 
 
-# ============================================================
-# CAMERA
-# ============================================================
-
 camera = cv2.VideoCapture(0)
 
 if not camera.isOpened():
@@ -43,9 +33,6 @@ print("AI Math Solver Started!")
 print("Press Q to quit.")
 
 
-# ============================================================
-# VARIABLES
-# ============================================================
 
 expression = ""
 answer = None
@@ -61,9 +48,6 @@ operator_start_time = None
 operator_accepted = False
 
 
-# ============================================================
-# DISTANCE BETWEEN TWO LANDMARKS
-# ============================================================
 
 def distance(p1, p2):
 
@@ -72,16 +56,9 @@ def distance(p1, p2):
         (p1.y - p2.y) ** 2
     )
 
-
-# ============================================================
-# FINGER STATES
-# ============================================================
-
 def get_finger_states(landmarks):
 
-    # --------------------------------------------------------
-    # Calculate hand size
-    # --------------------------------------------------------
+
 
     hand_size = distance(
         landmarks[0],
@@ -92,12 +69,6 @@ def get_finger_states(landmarks):
         hand_size = 0.1
 
 
-    # --------------------------------------------------------
-    # THUMB DETECTION
-    #
-    # Instead of only checking X position, use distance.
-    # This works better for 👍 and 🤙.
-    # --------------------------------------------------------
 
     thumb_distance = distance(
         landmarks[4],
@@ -107,19 +78,12 @@ def get_finger_states(landmarks):
     thumb = thumb_distance > hand_size * 0.55
 
 
-    # --------------------------------------------------------
-    # INDEX
-    # --------------------------------------------------------
-
     index = (
         landmarks[8].y <
         landmarks[6].y
     )
 
 
-    # --------------------------------------------------------
-    # MIDDLE
-    # --------------------------------------------------------
 
     middle = (
         landmarks[12].y <
@@ -127,9 +91,6 @@ def get_finger_states(landmarks):
     )
 
 
-    # --------------------------------------------------------
-    # RING
-    # --------------------------------------------------------
 
     ring = (
         landmarks[16].y <
@@ -137,9 +98,6 @@ def get_finger_states(landmarks):
     )
 
 
-    # --------------------------------------------------------
-    # LITTLE
-    # --------------------------------------------------------
 
     little = (
         landmarks[20].y <
@@ -150,9 +108,6 @@ def get_finger_states(landmarks):
     return thumb, index, middle, ring, little
 
 
-# ============================================================
-# COUNT NORMAL FINGERS 0-5
-# ============================================================
 
 def count_fingers(landmarks):
 
@@ -195,26 +150,12 @@ def count_fingers(landmarks):
     return fingers
 
 
-# ============================================================
-# LEFT HAND
-#
-# PHYSICAL LEFT HAND:
-#
-# 👍  = (
-# 🤙  = )
-#
-# Other gestures = numbers
-# ============================================================
-
 def get_left_hand_symbol(landmarks):
 
     thumb, index, middle, ring, little = \
         get_finger_states(landmarks)
 
 
-    # ========================================================
-    # PARENTHESES
-    # ========================================================
 
     # 👍
     # Thumb ONLY = (
@@ -240,9 +181,6 @@ def get_left_hand_symbol(landmarks):
         return ")"
 
 
-    # ========================================================
-    # NUMBERS 0-5
-    # ========================================================
 
     fingers = count_fingers(landmarks)
 
@@ -254,9 +192,6 @@ def get_left_hand_symbol(landmarks):
     return None
 
 
-# ============================================================
-# RIGHT HAND OPERATORS
-# ============================================================
 
 def get_operator(fingers):
 
@@ -278,9 +213,6 @@ def get_operator(fingers):
     return None
 
 
-# ============================================================
-# CALCULATE EXPRESSION
-# ============================================================
 
 def calculate_expression(exp):
 
@@ -298,10 +230,7 @@ def calculate_expression(exp):
             return "Invalid"
 
 
-        # ----------------------------------------------------
-        # Check parentheses
-        # ----------------------------------------------------
-
+       
         balance = 0
 
         for char in python_expression:
@@ -320,9 +249,7 @@ def calculate_expression(exp):
             return "Invalid"
 
 
-        # ----------------------------------------------------
-        # Calculate
-        # ----------------------------------------------------
+       
 
         result = eval(
             python_expression,
@@ -349,9 +276,6 @@ def calculate_expression(exp):
         return "Invalid"
 
 
-# ============================================================
-# MAIN PROGRAM
-# ============================================================
 
 with HandLandmarker.create_from_options(options) as landmarker:
 
@@ -398,9 +322,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
         current_operator = None
 
 
-        # ====================================================
-        # DETECT HANDS
-        # ====================================================
+       
 
         if result.hand_landmarks:
 
@@ -418,11 +340,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
                 )
 
 
-                # ------------------------------------------------
-                # PHYSICAL LEFT HAND
-                #
-                # MediaPipe "Right"
-                # ------------------------------------------------
+                
 
                 if hand_type == "Right":
 
@@ -432,12 +350,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
                         )
 
 
-                # ------------------------------------------------
-                # PHYSICAL RIGHT HAND
-                #
-                # MediaPipe "Left"
-                # ------------------------------------------------
-
+           
                 elif hand_type == "Left":
 
                     current_operator = \
@@ -446,9 +359,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
                         )
 
 
-        # ====================================================
-        # LEFT HAND STABILITY
-        # ====================================================
+       
 
         if current_left_symbol is not None:
 
@@ -470,9 +381,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
                     >= STABLE_TIME
                 ):
 
-                    # --------------------------------------------
-                    # Add number or parenthesis
-                    # --------------------------------------------
+                    
 
                     if current_left_symbol.isdigit():
 
@@ -526,11 +435,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
 
             left_accepted = False
 
-
-        # ====================================================
-        # RIGHT HAND OPERATOR STABILITY
-        # ====================================================
-
+       
         if current_operator is not None:
 
             if current_operator != stable_operator:
@@ -551,10 +456,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
                     >= STABLE_TIME
                 ):
 
-                    # ==========================================
-                    # EQUAL
-                    # ==========================================
-
+                   
                     if current_operator == "=":
 
                         if (
@@ -570,10 +472,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
                             )
 
 
-                    # ==========================================
-                    # NORMAL OPERATOR
-                    # ==========================================
-
+                   
                     else:
 
                         if expression:
@@ -604,10 +503,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
             operator_accepted = False
 
 
-        # ====================================================
-        # DISPLAY EXPRESSION
-        # ====================================================
-
+       
         cv2.putText(
             frame,
             "Expression: " + expression,
@@ -619,10 +515,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
         )
 
 
-        # ====================================================
-        # DISPLAY CURRENT LEFT SYMBOL
-        # ====================================================
-
+       
         cv2.putText(
             frame,
             "Number/Symbol: "
@@ -639,10 +532,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
         )
 
 
-        # ====================================================
-        # DISPLAY OPERATOR
-        # ====================================================
-
+       
         cv2.putText(
             frame,
             "Operator: "
@@ -659,10 +549,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
         )
 
 
-        # ====================================================
-        # DISPLAY ANSWER
-        # ====================================================
-
+        
         if answer is not None:
 
             cv2.putText(
@@ -676,9 +563,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
             )
 
 
-        # ====================================================
-        # INSTRUCTIONS
-        # ====================================================
+       
 
         cv2.putText(
             frame,
@@ -721,9 +606,8 @@ with HandLandmarker.create_from_options(options) as landmarker:
         )
 
 
-        # ====================================================
-        # SHOW
-        # ====================================================
+       
+       
 
         cv2.imshow(
             "AI Math Solver",
@@ -731,19 +615,14 @@ with HandLandmarker.create_from_options(options) as landmarker:
         )
 
 
-        # ====================================================
-        # QUIT
-        # ====================================================
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
 
-# ============================================================
-# CLEANUP
-# ============================================================
 
 camera.release()
 cv2.destroyAllWindows()
 
 print("AI Math Solver stopped.")
+
